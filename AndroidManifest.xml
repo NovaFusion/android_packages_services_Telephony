@@ -100,6 +100,8 @@
     <uses-permission android:name="android.permission.UPDATE_APP_OPS_STATS" />
     <uses-permission android:name="android.permission.CONNECTIVITY_INTERNAL" />
     <uses-permission android:name="android.permission.SET_PREFERRED_APPLICATIONS" />
+    <uses-permission android:name="android.permission.READ_PHONE_BLACKLIST" />
+    <uses-permission android:name="android.permission.CHANGE_PHONE_BLACKLIST" />
 
     <!-- This tells the activity manager to not delay any of our activity
          start requests, even if they happen immediately after the user
@@ -514,7 +516,6 @@
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.MAIN" />
-                <action android:name="android.settings.DATA_ROAMING_SETTINGS" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
@@ -537,7 +538,7 @@
         <activity android:name="MSimCallFeaturesSetting"
             android:label="@string/call_settings"
             android:configChanges="orientation|keyboardHidden"
-            android:theme="@android:style/Theme.Holo.DialogWhenLarge">
+            android:theme="@style/SettingsLight">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.MAIN" />
@@ -550,7 +551,7 @@
         <activity android:name="MSimCallFeaturesSubSetting"
             android:label="@string/call_settings"
             android:configChanges="orientation|keyboardHidden"
-            android:theme="@android:style/Theme.Holo.DialogWhenLarge">
+            android:theme="@style/SettingsLight">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.MAIN" />
@@ -566,6 +567,7 @@
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.settings.DATA_ROAMING_SETTINGS" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
@@ -589,6 +591,14 @@
                 <action android:name="android.bluetooth.IBluetoothHeadsetPhone" />
             </intent-filter>
         </service>
+
+        <!-- Broadcast receiver to set default handlers for various actions
+             depending if MSim is available -->
+        <receiver android:name="MSimActivityDisabler" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
         <!-- Broadcast Receiver that will process BOOT Complete and launch OTA -->
         <receiver android:name="OtaStartupReceiver" android:exported="false"
