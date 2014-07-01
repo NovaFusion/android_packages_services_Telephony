@@ -36,6 +36,7 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceGroup;
 import android.preference.PreferenceScreen;
+import android.telephony.ServiceState;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -74,6 +75,9 @@ public class NetworkSetting extends PreferenceActivity
 
     //map of network controls to the network data.
     private HashMap<Preference, OperatorInfo> mNetworkMap;
+
+    //map of RAT type values to user understandable strings
+    private HashMap<String, String> mRatMap;
 
     Phone mPhone;
     NetworkSettingDataManager mDataManager = null;
@@ -115,6 +119,7 @@ public class NetworkSetting extends PreferenceActivity
                     if (msg.arg1 == 1) {
                         loadNetworksList();
                     }
+                    mSearchButton.setEnabled(true);
                     break;
 
                 case EVENT_AUTO_SELECT_DONE:
@@ -166,6 +171,7 @@ public class NetworkSetting extends PreferenceActivity
             // as soon as it is bound, run a query.
             if (getApplicationContext().getResources().getBoolean(
                     R.bool.config_disable_data_manual_plmn)) {
+                mSearchButton.setEnabled(false);
                 Message onCompleteMsg = mHandler.obtainMessage(EVENT_NETWORK_DATA_MANAGER_DONE);
                 mDataManager.updateDataState(false, onCompleteMsg);
             } else {
@@ -202,6 +208,7 @@ public class NetworkSetting extends PreferenceActivity
         if (preference == mSearchButton) {
             if (getApplicationContext().getResources().getBoolean(
                     R.bool.config_disable_data_manual_plmn)) {
+                mSearchButton.setEnabled(false);
                 Message onCompleteMsg = mHandler.obtainMessage(EVENT_NETWORK_DATA_MANAGER_DONE);
                 mDataManager.updateDataState(false, onCompleteMsg);
             } else {
@@ -261,6 +268,8 @@ public class NetworkSetting extends PreferenceActivity
 
         mNetworkList = (PreferenceGroup) getPreferenceScreen().findPreference(LIST_NETWORKS_KEY);
         mNetworkMap = new HashMap<Preference, OperatorInfo>();
+        mRatMap = new HashMap<String, String>();
+        initRatMap();
 
         mSearchButton = getPreferenceScreen().findPreference(BUTTON_SRCH_NETWRKS_KEY);
         mAutoSelect = getPreferenceScreen().findPreference(BUTTON_AUTO_SELECT_KEY);
@@ -275,7 +284,7 @@ public class NetworkSetting extends PreferenceActivity
                 Context.BIND_AUTO_CREATE);
         if (getApplicationContext().getResources().getBoolean(
                 R.bool.config_disable_data_manual_plmn)) {
-            mDataManager = new NetworkSettingDataManager(mPhone, getApplicationContext());
+            mDataManager = new NetworkSettingDataManager(getApplicationContext());
         }
     }
 
@@ -486,13 +495,19 @@ public class NetworkSetting extends PreferenceActivity
      */
 
     private String getNetworkTitle(OperatorInfo ni) {
+        String title;
+
         if (!TextUtils.isEmpty(ni.getOperatorAlphaLong())) {
-            return ni.getOperatorAlphaLong();
+            title = ni.getOperatorAlphaLong();
         } else if (!TextUtils.isEmpty(ni.getOperatorAlphaShort())) {
-            return ni.getOperatorAlphaShort();
+            title = ni.getOperatorAlphaShort();
         } else {
-            return ni.getOperatorNumeric();
+            title = ni.getOperatorNumeric();
         }
+        if (!ni.getRadioTech().equals(""))
+            title += " " + mRatMap.get(ni.getRadioTech());
+
+        return title;
     }
 
     private void clearList() {
@@ -510,6 +525,27 @@ public class NetworkSetting extends PreferenceActivity
 
         Message msg = mHandler.obtainMessage(EVENT_AUTO_SELECT_DONE);
         mPhone.setNetworkSelectionModeAutomatic(msg);
+    }
+
+    private void initRatMap() {
+        mRatMap.put(String.valueOf(ServiceState.RIL_RADIO_TECHNOLOGY_UNKNOWN), "Unknown");
+        mRatMap.put(String.valueOf(ServiceState.RIL_RADIO_TECHNOLOGY_GPRS), "2G");
+        mRatMap.put(String.valueOf(ServiceState.RIL_RADIO_TECHNOLOGY_EDGE), "2G");
+        mRatMap.put(String.valueOf(ServiceState.RIL_RADIO_TECHNOLOGY_UMTS), "3G");
+        mRatMap.put(String.valueOf(ServiceState.RIL_RADIO_TECHNOLOGY_IS95A), "2G");
+        mRatMap.put(String.valueOf(ServiceState.RIL_RADIO_TECHNOLOGY_IS95B), "2G");
+        mRatMap.put(String.valueOf(ServiceState.RIL_RADIO_TECHNOLOGY_1xRTT), "2G");
+        mRatMap.put(String.valueOf(ServiceState.RIL_RADIO_TECHNOLOGY_EVDO_0), "3G");
+        mRatMap.put(String.valueOf(ServiceState.RIL_RADIO_TECHNOLOGY_EVDO_A), "3G");
+        mRatMap.put(String.valueOf(ServiceState.RIL_RADIO_TECHNOLOGY_HSDPA), "3G");
+        mRatMap.put(String.valueOf(ServiceState.RIL_RADIO_TECHNOLOGY_HSUPA), "3G");
+        mRatMap.put(String.valueOf(ServiceState.RIL_RADIO_TECHNOLOGY_HSPA), "3G");
+        mRatMap.put(String.valueOf(ServiceState.RIL_RADIO_TECHNOLOGY_EVDO_B), "3G");
+        mRatMap.put(String.valueOf(ServiceState.RIL_RADIO_TECHNOLOGY_EHRPD), "3G");
+        mRatMap.put(String.valueOf(ServiceState.RIL_RADIO_TECHNOLOGY_LTE), "4G");
+        mRatMap.put(String.valueOf(ServiceState.RIL_RADIO_TECHNOLOGY_HSPAP), "3G");
+        mRatMap.put(String.valueOf(ServiceState.RIL_RADIO_TECHNOLOGY_GSM), "2G");
+        mRatMap.put(String.valueOf(ServiceState.RIL_RADIO_TECHNOLOGY_TD_SCDMA), "3G");
     }
 
     private void log(String msg) {
